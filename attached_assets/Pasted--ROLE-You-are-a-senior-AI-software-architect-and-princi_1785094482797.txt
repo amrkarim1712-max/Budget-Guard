@@ -1,0 +1,405 @@
+# ROLE
+
+You are a senior AI software architect and principal full-stack engineer.
+
+Your goal is NOT to create a quick demo.
+
+Your goal is to build a production-quality AI platform that can grow into a premium product similar in quality to ChatGPT, while remaining completely modular and easy to extend.
+
+Think like an engineer building a startup that will eventually have hundreds of thousands of users.
+
+Never take shortcuts that make future development harder.
+
+---
+
+# PROJECT
+
+Build a modern AI assistant platform.
+
+The first release should include:
+
+- AI Chat
+- Web Search
+- Vision (image understanding)
+- Multiple AI models through OpenRouter
+- Conversation history
+- Authentication
+- Beautiful responsive UI
+
+The architecture must allow adding future features without rewriting existing code.
+
+Future features include:
+
+- Deep Research
+- Projects
+- Memory
+- File Chat
+- PDF Chat
+- Voice
+- Image Generation
+- AI Agents
+- Website Builder
+- App Builder
+- Knowledge Bases
+- Team Workspaces
+- Plugins
+- API
+
+Everything should already be designed so these can plug in later.
+
+---
+
+# IMPORTANT RULES
+
+Never generate everything at once.
+
+Always work step-by-step.
+
+Before writing code:
+
+1. Design architecture
+2. Explain architecture
+3. Create folder structure
+4. Create reusable components
+5. Build one feature
+6. Test
+7. Continue
+
+Never rewrite working code.
+
+Never duplicate logic.
+
+Always keep the project clean.
+
+---
+
+# TECH STACK
+
+Frontend
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Framer Motion
+
+Backend
+
+- Next.js Route Handlers
+- TypeScript
+
+Database
+
+- Supabase
+- Prisma ORM
+
+Authentication
+
+- Supabase Auth
+
+AI
+
+- OpenRouter API
+
+Deployment
+
+- Replit
+
+---
+
+# DESIGN
+
+The UI should feel premium.
+
+Inspired by:
+
+- ChatGPT
+- Claude
+- Linear
+- Notion
+
+DO NOT clone any product.
+
+Create an original design language.
+
+Requirements:
+
+- Beautiful spacing
+- Smooth animations
+- Responsive
+- Fast
+- Accessible
+- Dark mode
+- Light mode
+- Keyboard shortcuts
+
+---
+
+# FEATURES
+
+## Chat
+
+Streaming responses
+
+Markdown rendering
+
+Syntax highlighted code blocks
+
+Copy message
+
+Edit message
+
+Regenerate response
+
+Stop generation
+
+Conversation history
+
+Auto-generated titles
+
+Search conversations
+
+Delete conversation
+
+Rename conversation
+
+Pin conversation
+
+Share conversation
+
+Export conversation
+
+---
+
+## AI
+
+Support OpenRouter.
+
+Architecture must support unlimited models.
+
+Model selector.
+
+Easy to add new models.
+
+Conversation should remember selected model.
+
+---
+
+## Vision
+
+Image upload
+
+Drag & Drop
+
+Paste images
+
+Preview before sending
+
+AI image analysis
+
+---
+
+## Web Search
+
+Search toggle
+
+Ground answers using search
+
+Display sources
+
+Clickable citations
+
+Search status indicator
+
+---
+
+## Attachments
+
+Prepare architecture for:
+
+PDF
+
+DOCX
+
+TXT
+
+CSV
+
+Excel
+
+Images
+
+Even if only images are implemented initially.
+
+---
+
+# PERFORMANCE
+
+Lazy loading
+
+Code splitting
+
+Optimized rendering
+
+Streaming
+
+Error boundaries
+
+Caching where appropriate
+
+Loading skeletons
+
+Retry handling
+
+---
+
+# SECURITY
+
+Environment variables
+
+Input validation
+
+Rate limiting ready
+
+Secure API routes
+
+Never expose secrets
+
+Sanitize user input
+
+---
+
+# CODE QUALITY
+
+Strict TypeScript
+
+Reusable hooks
+
+Reusable components
+
+SOLID principles
+
+Feature-based architecture
+
+No duplicated code
+
+Well documented
+
+Clean naming
+
+Readable code
+
+---
+
+# FOLDER STRUCTURE
+
+Organize using scalable feature architecture.
+
+Example:
+
+app/
+
+components/
+chat/
+sidebar/
+composer/
+messages/
+ui/
+
+features/
+chat/
+search/
+vision/
+models/
+
+lib/
+ai/
+database/
+auth/
+utils/
+
+hooks/
+
+types/
+
+styles/
+
+Do not create a messy project.
+
+---
+
+# FUTURE ARCHITECTURE
+
+Design around services.
+
+Example:
+
+AI Service
+
+Chat Service
+
+Memory Service
+
+Search Service
+
+Vision Service
+
+Projects Service
+
+Knowledge Service
+
+Every feature should communicate through services.
+
+Avoid tight coupling.
+
+---
+
+# USER EXPERIENCE
+
+Typing animation
+
+Streaming tokens
+
+Auto-scroll
+
+Scroll to bottom button
+
+Message actions
+
+Quick prompts
+
+Beautiful empty state
+
+Toast notifications
+
+Smooth transitions
+
+Professional loading states
+
+---
+
+# DEVELOPMENT PROCESS
+
+Always do this:
+
+Explain what you're building.
+
+Build only one feature.
+
+Verify it works.
+
+Wait before moving to the next feature.
+
+Never build five features simultaneously.
+
+Never refactor working code unless necessary.
+
+Keep commits logically separated.
+
+---
+
+# END GOAL
+
+By the end, this should feel like a polished AI workspace, not just another chatbot.
+
+The codebase should be clean enough that a team of engineers could continue building it for years.
