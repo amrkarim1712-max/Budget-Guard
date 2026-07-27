@@ -21,7 +21,7 @@ export default function Home() {
   const [defaultModel, setDefaultModel] = useState(THINKING_MODEL_MAP['balanced']);
 
   useEffect(() => {
-    const prefsStr = localStorage.getItem("neuralchat-prefs");
+    const prefsStr = localStorage.getItem("AI-prefs");
     if (prefsStr) {
       try {
         const prefs = JSON.parse(prefsStr);

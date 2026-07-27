@@ -1,1 +1,1 @@
-- [NeuralChat build](neuralchat-build.md) — OpenRouter with user's own key; SSE streaming via raw fetch not generated hooks; auth is Replit OIDC
+- [AI build](AI-build.md) — OpenRouter with user's own key; SSE streaming via raw fetch not generated hooks; auth is Replit OIDC

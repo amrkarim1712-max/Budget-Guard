@@ -15,16 +15,13 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5,
-      // Only retry on server errors (5xx), not client errors (4xx)
       retry: (failureCount, error: any) => {
         if (error?.status >= 400 && error?.status < 500) return false;
         return failureCount < 2;
       },
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
     },
-    mutations: {
-      retry: false,
-    },
+    mutations: { retry: false },
   },
 });
 
@@ -44,7 +41,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider delayDuration={200}>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>

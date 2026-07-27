@@ -1,6 +1,6 @@
 ---
-name: NeuralChat build decisions
-description: Key decisions and gotchas from building the NeuralChat AI platform
+name: AI build decisions
+description: Key decisions and gotchas from building the AI AI platform
 ---
 
 ## OpenRouter integration

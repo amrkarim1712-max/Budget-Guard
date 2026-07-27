@@ -14,7 +14,7 @@ export default function Settings() {
   const { data: models } = useListOpenrouterModels();
 
   useEffect(() => {
-    const prefsStr = localStorage.getItem("neuralchat-prefs");
+    const prefsStr = localStorage.getItem("AI-prefs");
     if (prefsStr) {
       try {
         const prefs = JSON.parse(prefsStr);
@@ -25,10 +25,10 @@ export default function Settings() {
   }, []);
 
   const updatePrefs = (updates: any) => {
-    const prefsStr = localStorage.getItem("neuralchat-prefs");
+    const prefsStr = localStorage.getItem("AI-prefs");
     const current = prefsStr ? JSON.parse(prefsStr) : {};
     const next = { ...current, ...updates };
-    localStorage.setItem("neuralchat-prefs", JSON.stringify(next));
+    localStorage.setItem("AI-prefs", JSON.stringify(next));
   };
 
   const handleLevelChange = (newLevel: ThinkingLevel) => {

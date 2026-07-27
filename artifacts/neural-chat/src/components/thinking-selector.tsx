@@ -1,12 +1,34 @@
 import { cn } from "@/lib/utils";
 import { Zap, Target, Brain } from "lucide-react";
 
-export type ThinkingLevel = 'fast' | 'balanced' | 'deep';
+export type ThinkingLevel = "fast" | "balanced" | "deep";
 
+/**
+ * Model selection based on user effort level.
+ * Models are selected automatically.
+ */
 export const THINKING_MODEL_MAP: Record<ThinkingLevel, string> = {
-  fast: 'meta-llama/llama-3.3-70b-instruct',
-  balanced: 'openai/gpt-4o-mini',
-  deep: 'anthropic/claude-sonnet-4-5',
+  fast: "meta-llama/llama-3.3-70b-instruct",
+  balanced: "meta-llama/llama-3.3-70b-instruct",
+  deep: "deepseek/deepseek-r1",
+};
+
+export const THINKING_LABELS: Record<
+  ThinkingLevel,
+  { label: string; hint: string }
+> = {
+  fast: {
+    label: "Fast",
+    hint: "Llama 3.3 · fast",
+  },
+  balanced: {
+    label: "Balanced",
+    hint: "Llama 3.3 · balanced",
+  },
+  deep: {
+    label: "Deep",
+    hint: "DeepSeek R1 · reasoning",
+  },
 };
 
 interface Props {
@@ -15,35 +37,39 @@ interface Props {
   disabled?: boolean;
 }
 
-export default function ThinkingSelector({ value, onChange, disabled }: Props) {
-  const options: { id: ThinkingLevel; label: string; icon: any }[] = [
-    { id: 'fast', label: 'Fast', icon: Zap },
-    { id: 'balanced', label: 'Balanced', icon: Target },
-    { id: 'deep', label: 'Deep', icon: Brain },
-  ];
+const OPTIONS: { id: ThinkingLevel; Icon: typeof Zap }[] = [
+  { id: "fast", Icon: Zap },
+  { id: "balanced", Icon: Target },
+  { id: "deep", Icon: Brain },
+];
 
+export default function ThinkingSelector({ value, onChange, disabled }: Props) {
   return (
-    <div className={cn(
-      "inline-flex items-center bg-transparent border border-border rounded-lg p-0.5 shadow-sm",
-      disabled && "opacity-50 pointer-events-none"
-    )}>
-      {options.map((opt) => {
-        const isSelected = value === opt.id;
-        const Icon = opt.icon;
+    <div
+      className={cn(
+        "inline-flex items-center bg-muted/40 border border-border/60 rounded-lg p-0.5",
+        disabled && "opacity-40 pointer-events-none",
+      )}
+      title={THINKING_LABELS[value].hint}
+    >
+      {OPTIONS.map(({ id, Icon }) => {
+        const isSelected = value === id;
+
         return (
           <button
-            key={opt.id}
-            onClick={() => onChange(opt.id)}
+            key={id}
+            onClick={() => onChange(id)}
             disabled={disabled}
+            title={THINKING_LABELS[id].hint}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors",
-              isSelected 
-                ? "bg-primary/10 text-primary" 
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium transition-all duration-100",
+              isSelected
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="w-3.5 h-3.5" />
-            {opt.label}
+            <Icon className="w-3 h-3" />
+            {THINKING_LABELS[id].label}
           </button>
         );
       })}

@@ -15,7 +15,7 @@ export const AVAILABLE_MODELS = [
     pricing: "Free",
   },
   {
-    id: "google/gemini-2.0-flash-001",
+    id: "meta-llama/llama-3.3-70b-instruct",
     name: "Gemini 2.0 Flash",
     description: "Google's fastest multimodal model with vision support.",
     contextLength: 1048576,

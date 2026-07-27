@@ -2,7 +2,7 @@
 
 You are a senior product designer, frontend architect, and full-stack engineer.
 
-NeuralChat is already working:
+AI is already working:
 - Chat works
 - OpenRouter integration works
 - Conversation context works
@@ -11,7 +11,7 @@ NeuralChat is already working:
 
 Do NOT rebuild anything.
 
-Your job is to transform NeuralChat into a premium AI application.
+Your job is to transform AI into a premium AI application.
 
 ---
 
@@ -29,7 +29,7 @@ Improve the product while preserving everything that already works.
 
 # GOAL
 
-Make NeuralChat feel like a premium 2026 AI product.
+Make AI feel like a premium 2026 AI product.
 
 The first impression should make users think:
 

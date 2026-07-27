@@ -12,6 +12,6 @@ export const openrouter = new OpenAI({
   apiKey,
   defaultHeaders: {
     "HTTP-Referer": process.env.REPLIT_DOMAINS ?? "https://localhost",
-    "X-Title": "NeuralChat",
+    "X-Title": "AI",
   },
 });

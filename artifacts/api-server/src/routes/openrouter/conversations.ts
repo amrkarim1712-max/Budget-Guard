@@ -15,22 +15,8 @@ router.get("/openrouter/conversations", async (req: Request, res: Response) => {
   const parsed = ListOpenrouterConversationsQueryParams.safeParse(req.query);
   const search = parsed.success ? parsed.data.search : undefined;
 
-  const userId = req.isAuthenticated() ? req.user.id : null;
-
-  let query = db
-    .select()
-    .from(conversations)
-    .orderBy(desc(conversations.pinned), desc(conversations.updatedAt));
-
   const conditions = [];
-  if (userId) {
-    conditions.push(eq(conversations.userId, userId));
-  } else {
-    // Return all for unauthenticated (demo mode)
-  }
-  if (search) {
-    conditions.push(ilike(conversations.title, `%${search}%`));
-  }
+  if (search) conditions.push(ilike(conversations.title, `%${search}%`));
 
   const results =
     conditions.length > 0
@@ -72,20 +58,10 @@ router.post("/openrouter/conversations", async (req: Request, res: Response) => 
 // Get conversation with messages
 router.get("/openrouter/conversations/:id", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid conversation ID" });
-    return;
-  }
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
-  const [conv] = await db
-    .select()
-    .from(conversations)
-    .where(eq(conversations.id, id));
-
-  if (!conv) {
-    res.status(404).json({ error: "Conversation not found" });
-    return;
-  }
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
+  if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
 
   const msgs = await db
     .select()
@@ -93,25 +69,16 @@ router.get("/openrouter/conversations/:id", async (req: Request, res: Response) 
     .where(eq(messages.conversationId, id))
     .orderBy(messages.createdAt);
 
-  res.json({
-    ...formatConversation(conv),
-    messages: msgs.map(formatMessage),
-  });
+  res.json({ ...formatConversation(conv), messages: msgs.map(formatMessage) });
 });
 
-// Update conversation (rename, pin, model)
+// Update conversation
 router.patch("/openrouter/conversations/:id", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid conversation ID" });
-    return;
-  }
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const body = UpdateOpenrouterConversationBody.safeParse(req.body);
-  if (!body.success) {
-    res.status(400).json({ error: "Invalid request body" });
-    return;
-  }
+  if (!body.success) { res.status(400).json({ error: "Invalid request body" }); return; }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (body.data.title !== undefined) updateData.title = body.data.title;
@@ -119,37 +86,21 @@ router.patch("/openrouter/conversations/:id", async (req: Request, res: Response
   if (body.data.model !== undefined) updateData.model = body.data.model;
 
   const [updated] = await db
-    .update(conversations)
-    .set(updateData)
-    .where(eq(conversations.id, id))
-    .returning();
+    .update(conversations).set(updateData).where(eq(conversations.id, id)).returning();
 
-  if (!updated) {
-    res.status(404).json({ error: "Conversation not found" });
-    return;
-  }
-
+  if (!updated) { res.status(404).json({ error: "Conversation not found" }); return; }
   res.json(formatConversation(updated));
 });
 
 // Delete conversation
 router.delete("/openrouter/conversations/:id", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid conversation ID" });
-    return;
-  }
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const [deleted] = await db
-    .delete(conversations)
-    .where(eq(conversations.id, id))
-    .returning();
+    .delete(conversations).where(eq(conversations.id, id)).returning();
 
-  if (!deleted) {
-    res.status(404).json({ error: "Conversation not found" });
-    return;
-  }
-
+  if (!deleted) { res.status(404).json({ error: "Conversation not found" }); return; }
   res.status(204).send();
 });
 
@@ -174,6 +125,7 @@ export function formatMessage(msg: typeof messages.$inferSelect) {
     images: msg.images ?? null,
     model: msg.model ?? null,
     webSearch: msg.webSearch,
+    citations: msg.citations ?? null,
     createdAt: msg.createdAt.toISOString(),
   };
 }

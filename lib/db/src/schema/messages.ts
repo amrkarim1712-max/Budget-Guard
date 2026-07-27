@@ -14,6 +14,7 @@ export const messages = pgTable("messages", {
   model: text("model"),
   webSearch: boolean("web_search").notNull().default(false),
   images: text("images").array(),
+  citations: text("citations").array(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

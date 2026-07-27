@@ -1,4 +1,4 @@
-# NeuralChat
+# AI
 
 A production-quality AI assistant platform — streaming chat, multiple AI models via OpenRouter, web search mode, vision (image upload), conversation history, and Replit Auth. Designed to feel like Linear meets Claude: precise, fast, and genuinely beautiful.
 

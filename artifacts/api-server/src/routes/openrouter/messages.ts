@@ -5,16 +5,15 @@ import { eq, asc, count } from "drizzle-orm";
 import { SendOpenrouterMessageBody } from "@workspace/api-zod";
 import { openrouter } from "@workspace/integrations-openrouter-ai";
 import { formatMessage } from "./conversations";
+import { webSearchTool, type ChatMessage, type ToolResult } from "../../tools/index";
 
 const router: IRouter = Router();
 
-// List messages
+// ── List messages ──────────────────────────────────────────────────────────────
+
 router.get("/openrouter/conversations/:id/messages", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid conversation ID" });
-    return;
-  }
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const msgs = await db
     .select()
@@ -25,87 +24,64 @@ router.get("/openrouter/conversations/:id/messages", async (req: Request, res: R
   res.json(msgs.map(formatMessage));
 });
 
-// Send message (SSE streaming)
+// ── Send message (SSE streaming) ───────────────────────────────────────────────
+
 router.post("/openrouter/conversations/:id/messages", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "Invalid conversation ID" });
-    return;
-  }
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const body = SendOpenrouterMessageBody.safeParse(req.body);
-  if (!body.success) {
-    res.status(400).json({ error: "Invalid request body" });
-    return;
-  }
+  if (!body.success) { res.status(400).json({ error: "Invalid request body" }); return; }
 
   const { content, model: messageModel, webSearch = false, images = [] } = body.data;
 
-  // Get conversation
-  const [conv] = await db
-    .select()
-    .from(conversations)
-    .where(eq(conversations.id, id));
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
+  if (!conv) { res.status(404).json({ error: "Conversation not found" }); return; }
 
-  if (!conv) {
-    res.status(404).json({ error: "Conversation not found" });
-    return;
-  }
+  const baseModel = messageModel ?? conv.model;
 
-  const selectedModel = messageModel ?? conv.model;
-
-  // Save user message
+  // ── Save user message ────────────────────────────────────────────────────────
   const [userMsg] = await db
     .insert(messages)
     .values({
       conversationId: id,
       role: "user",
       content,
-      model: selectedModel,
+      model: baseModel,
       webSearch,
       images: images.length > 0 ? images : null,
     })
     .returning();
 
-  // Get conversation history for context
+  // ── Build chat history ───────────────────────────────────────────────────────
   const history = await db
     .select()
     .from(messages)
     .where(eq(messages.conversationId, id))
     .orderBy(asc(messages.createdAt));
 
-  // Build chat messages for OpenRouter
-  const chatMessages: Array<{
-    role: "user" | "assistant" | "system";
-    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
-  }> = [];
+  const chatMessages: ChatMessage[] = [];
 
-  // System message
   const systemParts = [
-    "You are NeuralChat, a helpful and knowledgeable AI assistant.",
+    "You are AI, a helpful and knowledgeable AI assistant.",
     "Provide clear, accurate, and thoughtful responses.",
     "Format code with proper markdown code blocks with language identifiers.",
   ];
-  if (webSearch) {
-    systemParts.push(
-      `Today's date is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.`,
-      "The user has enabled web search mode. Use your most up-to-date knowledge and clearly indicate when information might be outdated."
-    );
-  }
-  chatMessages.push({ role: "system", content: systemParts.join(" ") });
 
   // Add history (excluding the just-inserted user message)
   for (const msg of history.slice(0, -1)) {
     if (msg.role === "user") {
       if (msg.images && msg.images.length > 0) {
-        const contentParts: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
-          { type: "text", text: msg.content },
-          ...msg.images.map((img) => ({
-            type: "image_url",
-            image_url: { url: img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}` },
-          })),
-        ];
-        chatMessages.push({ role: "user", content: contentParts });
+        chatMessages.push({
+          role: "user",
+          content: [
+            { type: "text", text: msg.content },
+            ...msg.images.map((img) => ({
+              type: "image_url",
+              image_url: { url: img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}` },
+            })),
+          ],
+        });
       } else {
         chatMessages.push({ role: "user", content: msg.content });
       }
@@ -114,36 +90,59 @@ router.post("/openrouter/conversations/:id/messages", async (req: Request, res: 
     }
   }
 
-  // Add current user message with images if any
+  // Add current user message
   if (images.length > 0) {
-    const contentParts: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
-      { type: "text", text: content },
-      ...images.map((img) => ({
-        type: "image_url",
-        image_url: { url: img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}` },
-      })),
-    ];
-    chatMessages.push({ role: "user", content: contentParts });
+    chatMessages.push({
+      role: "user",
+      content: [
+        { type: "text", text: content },
+        ...images.map((img) => ({
+          type: "image_url",
+          image_url: { url: img.startsWith("data:") ? img : `data:image/jpeg;base64,${img}` },
+        })),
+      ],
+    });
   } else {
     chatMessages.push({ role: "user", content });
   }
 
-  // Set SSE headers
+  // ── Apply tools ──────────────────────────────────────────────────────────────
+  let toolResult: ToolResult = {
+    model: baseModel,
+    messages: chatMessages,
+    systemParts,
+    metadata: {},
+  };
+
+  if (webSearch) {
+    toolResult = await webSearchTool.prepare({
+      model: toolResult.model,
+      messages: toolResult.messages,
+      systemParts: toolResult.systemParts,
+    });
+  }
+  // Future tools: if (codeInterpreter) toolResult = await codeInterpreterTool.prepare(toolResult);
+
+  const finalMessages: ChatMessage[] = [
+    { role: "system", content: toolResult.systemParts.join(" ") },
+    ...toolResult.messages,
+  ];
+
+  // ── SSE setup ────────────────────────────────────────────────────────────────
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
 
-  // Send the user message back immediately
   res.write(`data: ${JSON.stringify({ userMessage: formatMessage(userMsg) })}\n\n`);
 
   let fullResponse = "";
 
   try {
     const stream = await openrouter.chat.completions.create({
-      model: selectedModel,
+      model: toolResult.model,
       max_tokens: 8192,
-      messages: chatMessages as Parameters<typeof openrouter.chat.completions.create>[0]["messages"],
+      messages: finalMessages as Parameters<typeof openrouter.chat.completions.create>[0]["messages"],
       stream: true,
     });
 
@@ -153,36 +152,47 @@ router.post("/openrouter/conversations/:id/messages", async (req: Request, res: 
         fullResponse += delta;
         res.write(`data: ${JSON.stringify({ content: delta })}\n\n`);
       }
+
+      // Let active tools inspect the chunk for metadata (e.g., citations)
+      if (webSearch) {
+        const before = JSON.stringify(toolResult.metadata.citations);
+        webSearchTool.processChunk(chunk as unknown as Record<string, unknown>, toolResult);
+        const after = JSON.stringify(toolResult.metadata.citations);
+        // Stream citations to the client as soon as they're found
+        if (before !== after && Array.isArray(toolResult.metadata.citations)) {
+          res.write(`data: ${JSON.stringify({ citations: toolResult.metadata.citations })}\n\n`);
+        }
+      }
     }
 
-    // Save assistant message
+    const citations = Array.isArray(toolResult.metadata.citations) && toolResult.metadata.citations.length > 0
+      ? (toolResult.metadata.citations as string[])
+      : null;
+
+    // ── Save assistant message ───────────────────────────────────────────────
     const [assistantMsg] = await db
       .insert(messages)
       .values({
         conversationId: id,
         role: "assistant",
         content: fullResponse,
-        model: selectedModel,
+        model: toolResult.model,
         webSearch,
+        citations,
       })
       .returning();
 
-    // Check if this is the first exchange — if so, generate a title
+    // Auto-generate title on first exchange
     const [{ value: msgCount }] = await db
       .select({ value: count() })
       .from(messages)
       .where(eq(messages.conversationId, id));
 
     if (Number(msgCount) <= 3 && conv.title === "New Conversation") {
-      // Auto-generate title in background
-      generateTitle(id, content, fullResponse, selectedModel).catch(() => {});
+      generateTitle(id, content, fullResponse, baseModel).catch(() => {});
     }
 
-    // Update conversation updatedAt
-    await db
-      .update(conversations)
-      .set({ updatedAt: new Date() })
-      .where(eq(conversations.id, id));
+    await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, id));
 
     res.write(`data: ${JSON.stringify({ done: true, assistantMessage: formatMessage(assistantMsg) })}\n\n`);
   } catch (err) {
@@ -193,15 +203,19 @@ router.post("/openrouter/conversations/:id/messages", async (req: Request, res: 
   res.end();
 });
 
+// ── Auto title generation ──────────────────────────────────────────────────────
+
 async function generateTitle(
   conversationId: number,
   userMessage: string,
   assistantMessage: string,
   model: string
 ): Promise<void> {
+  // Use the base model without :online for title generation (no web search needed)
+  const titleModel = model.replace(/:online$/, "");
   try {
     const response = await openrouter.chat.completions.create({
-      model,
+      model: titleModel,
       max_tokens: 20,
       messages: [
         {
@@ -223,7 +237,7 @@ Title:`,
         .where(eq(conversations.id, conversationId));
     }
   } catch {
-    // Silently fail — title generation is non-critical
+    // Non-critical
   }
 }
 
