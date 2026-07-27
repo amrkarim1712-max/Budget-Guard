@@ -1,0 +1,227 @@
+# ROLE
+
+You are a senior product designer, frontend architect, and full-stack engineer.
+
+NeuralChat is already working:
+- Chat works
+- OpenRouter integration works
+- Conversation context works
+- Streaming works
+- Multiple models work
+
+Do NOT rebuild anything.
+
+Your job is to transform NeuralChat into a premium AI application.
+
+---
+
+# IMPORTANT
+
+Do NOT change the backend unless absolutely necessary.
+
+Do NOT break existing functionality.
+
+Do NOT rewrite the architecture.
+
+Improve the product while preserving everything that already works.
+
+---
+
+# GOAL
+
+Make NeuralChat feel like a premium 2026 AI product.
+
+The first impression should make users think:
+
+"This feels better than a typical AI chatbot."
+
+---
+
+# PRIORITY 1
+## Premium UI
+
+Completely polish the interface.
+
+Improve:
+
+- typography
+- spacing
+- visual hierarchy
+- colors
+- shadows
+- rounded corners
+- hover states
+- transitions
+- loading animations
+- responsiveness
+
+The interface should feel calm, modern, and premium.
+
+---
+
+# PRIORITY 2
+## Chat Experience
+
+Improve:
+
+- assistant message width
+- markdown rendering
+- code blocks
+- spacing between messages
+- timestamps
+- message actions
+- streaming animation
+- thinking indicator
+- smooth scrolling
+- copy button
+- regenerate button
+
+---
+
+# PRIORITY 3
+## Composer
+
+Redesign the message composer.
+
+Requirements:
+
+Large modern input.
+
+Attachment button.
+
+Web Search toggle.
+
+Vision/Image button.
+
+Thinking selector:
+
+⚡ Fast
+🎯 Balanced
+🧠 Deep
+
+Beautiful send button.
+
+Excellent keyboard UX.
+
+Professional focus animation.
+
+This should become the visual centerpiece of the application.
+
+---
+
+# PRIORITY 4
+## Homepage
+
+Redesign the landing page.
+
+Replace the generic chatbot appearance with an AI workspace feeling.
+
+Better headline.
+
+Better quick actions.
+
+Better empty state.
+
+Improve hierarchy.
+
+Create a memorable first impression.
+
+---
+
+# PRIORITY 5
+## Sidebar
+
+Improve:
+
+conversation cards
+
+active state
+
+hover effects
+
+spacing
+
+icons
+
+search
+
+scroll behavior
+
+organization
+
+---
+
+# PRIORITY 6
+## Settings
+
+Create a premium settings page.
+
+Include:
+
+Theme
+
+Thinking Level
+
+Default Model
+
+Appearance
+
+Advanced Mode
+
+Do not expose technical settings by default.
+
+---
+
+# PERFORMANCE
+
+Reduce unnecessary renders.
+
+Optimize animations.
+
+Lazy load where appropriate.
+
+Improve perceived performance.
+
+---
+
+# CODE QUALITY
+
+Use reusable React components.
+
+Strict TypeScript.
+
+No duplicate code.
+
+Clean architecture.
+
+Document important components.
+
+---
+
+# TESTING
+
+After every UI change:
+
+Run the application.
+
+Verify chat still works.
+
+Verify streaming still works.
+
+Verify conversation history still works.
+
+Verify model selection still works.
+
+Fix regressions immediately.
+
+---
+
+# FINAL OBJECTIVE
+
+The app should no longer feel like an AI template.
+
+It should feel like a polished commercial product that someone would happily use every day.
+
+Do not stop after making small visual tweaks.
+
+Iterate until the UI feels premium while keeping the existing functionality intact.

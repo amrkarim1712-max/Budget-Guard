@@ -1,17 +1,27 @@
-import { Copy, RefreshCw, Pencil, Check } from "lucide-react";
+import { Copy, RefreshCw, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hr ago`;
+  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+}
 
 export default function MessageBubble({ message, isStreaming = false }: { message: any, isStreaming?: boolean }) {
   const isUser = message.role === "user";
-  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [showTime, setShowTime] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -19,50 +29,89 @@ export default function MessageBubble({ message, isStreaming = false }: { messag
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isEmptyStreaming = isStreaming && !message.content;
+
+  if (isUser) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="flex justify-end w-full group relative mb-4"
+        onMouseEnter={() => setShowTime(true)}
+        onMouseLeave={() => setShowTime(false)}
+      >
+        <div className="flex flex-col items-end max-w-[75%] relative">
+          {message.images && message.images.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2 justify-end">
+              {message.images.map((img: string, i: number) => (
+                <img key={i} src={img} alt="attached" className="max-w-[200px] max-h-[200px] rounded-lg object-cover border border-border" />
+              ))}
+            </div>
+          )}
+          
+          <div className="px-4 py-3 rounded-2xl rounded-tr-md bg-primary text-primary-foreground text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap font-[450]">
+            {message.content}
+          </div>
+          
+          <AnimatePresence>
+            {showTime && message.createdAt && (
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="text-[11px] text-muted-foreground mt-1 absolute -top-5 right-0 whitespace-nowrap"
+              >
+                {formatRelativeTime(message.createdAt)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className={cn("flex gap-4 group w-full", isUser ? "flex-row-reverse" : "flex-row")}
+      className="flex gap-4 group w-full relative mb-8"
+      onMouseEnter={() => setShowTime(true)}
+      onMouseLeave={() => setShowTime(false)}
     >
-      <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm select-none">
-        {isUser ? (
-          <div className="w-full h-full rounded-full bg-primary/20 text-primary flex items-center justify-center font-medium text-xs">
-            {user?.firstName?.[0] || user?.email?.[0] || "U"}
-          </div>
-        ) : (
-          <div className="w-full h-full rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-bold text-xs">
-            N
-          </div>
-        )}
+      <div className="shrink-0 w-[24px] h-[24px] mt-1 rounded-sm bg-primary/10 text-primary flex items-center justify-center font-bold text-xs select-none">
+        N
       </div>
 
-      <div className={cn(
-        "flex flex-col max-w-[85%]",
-        isUser ? "items-end" : "items-start"
-      )}>
-        {message.images && message.images.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 justify-end">
-            {message.images.map((img: string, i: number) => (
-              <img key={i} src={img} alt="attached" className="max-w-[200px] max-h-[200px] rounded-lg object-cover border border-border" />
-            ))}
-          </div>
-        )}
+      <div className="flex flex-col w-full min-w-0 relative">
+        <AnimatePresence>
+          {showTime && message.createdAt && (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="text-[11px] text-muted-foreground mb-1 absolute -top-5 left-0 whitespace-nowrap"
+            >
+              {formatRelativeTime(message.createdAt)}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className={cn(
-          "px-4 py-3 rounded-2xl text-sm leading-relaxed",
-          isUser ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card border border-border/50 text-foreground rounded-tl-sm shadow-sm"
-        )}>
-          {isUser ? (
-            <div className="whitespace-pre-wrap">{message.content}</div>
+        <div className="text-foreground text-[15px] leading-relaxed">
+          {isEmptyStreaming ? (
+            <div className="flex gap-1 items-center h-6">
+              <motion.div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.4, delay: 0 }} />
+              <motion.div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.4, delay: 0.2 }} />
+              <motion.div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.4, delay: 0.4 }} />
+            </div>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none break-words
-              prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:m-0 
+              prose-p:leading-[1.6] prose-p:my-3 prose-pre:p-0 prose-pre:bg-transparent prose-pre:m-0 
               prose-code:text-[13px] prose-code:font-mono prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md
               prose-code:before:content-none prose-code:after:content-none
-              prose-ul:my-2 prose-li:my-0.5
-              prose-headings:font-semibold prose-headings:tracking-tight prose-headings:mt-4 prose-headings:mb-2
+              prose-ul:my-3 prose-li:my-1
+              prose-headings:font-medium prose-headings:tracking-tight prose-headings:mt-6 prose-headings:mb-3 prose-headings:border-b prose-headings:border-border/30 prose-headings:pb-2
             ">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -70,14 +119,14 @@ export default function MessageBubble({ message, isStreaming = false }: { messag
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || '');
                     return !inline && match ? (
-                      <div className="rounded-lg overflow-hidden my-4 border border-border/50 bg-[#1e1e1e]">
-                        <div className="flex items-center justify-between px-4 py-2 bg-muted/20 border-b border-border/10 text-xs text-muted-foreground font-mono">
+                      <div className="rounded-lg overflow-hidden my-4 border border-[#2a2a2a] bg-[#0d1117]">
+                        <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-[#2a2a2a] text-xs text-[#8b949e] font-mono">
                           <span>{match[1]}</span>
                           <button 
                             onClick={() => navigator.clipboard.writeText(String(children).replace(/\n$/, ''))}
-                            className="hover:text-foreground transition-colors"
+                            className="hover:text-[#c9d1d9] transition-colors flex items-center gap-1.5"
                           >
-                            Copy
+                            <Copy className="w-3 h-3" /> Copy
                           </button>
                         </div>
                         <SyntaxHighlighter
@@ -99,35 +148,25 @@ export default function MessageBubble({ message, isStreaming = false }: { messag
                   }
                 }}
               >
-                {message.content + (isStreaming ? " ▋" : "")}
+                {message.content + (isStreaming && message.content ? " ▋" : "")}
               </ReactMarkdown>
             </div>
           )}
         </div>
 
         {!isUser && !isStreaming && (
-          <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1.5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button 
               onClick={handleCopy}
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted text-muted-foreground transition-colors text-xs font-medium"
               title="Copy"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? "Copied" : "Copy"}
             </button>
-            <button className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors" title="Regenerate">
+            <button className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted text-muted-foreground transition-colors text-xs font-medium" title="Regenerate">
               <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-        
-        {isUser && !isStreaming && (
-          <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-            <button 
-              disabled
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors opacity-50 cursor-not-allowed"
-              title="Edit (Coming soon)"
-            >
-              <Pencil className="w-3.5 h-3.5" />
+              Retry
             </button>
           </div>
         )}

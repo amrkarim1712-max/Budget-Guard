@@ -17,10 +17,17 @@ import {
   Trash2,
   Edit2
 } from "lucide-react";
-import { useListOpenrouterConversations, useCreateOpenrouterConversation, useUpdateOpenrouterConversation, useDeleteOpenrouterConversation, getListOpenrouterConversationsQueryKey, useGetOpenrouterStats } from "@workspace/api-client-react";
+import {
+  useListOpenrouterConversations,
+  useUpdateOpenrouterConversation,
+  useDeleteOpenrouterConversation,
+  getListOpenrouterConversationsQueryKey,
+  useGetOpenrouterStats
+} from "@workspace/api-client-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +35,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -37,15 +43,13 @@ export default function Sidebar() {
   const { theme, setTheme } = useTheme();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: conversations } = useListOpenrouterConversations(
     { search: search || undefined },
     { query: { queryKey: getListOpenrouterConversationsQueryKey({ search: search || undefined }) } }
   );
-  
-  const { data: stats } = useGetOpenrouterStats();
 
-  const createChat = useCreateOpenrouterConversation();
   const updateChat = useUpdateOpenrouterConversation();
   const deleteChat = useDeleteOpenrouterConversation();
 
@@ -59,6 +63,9 @@ export default function Sidebar() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListOpenrouterConversationsQueryKey() });
+        },
+        onError: () => {
+          toast({ title: "Failed to update conversation", variant: "destructive" });
         }
       }
     );
@@ -71,6 +78,9 @@ export default function Sidebar() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListOpenrouterConversationsQueryKey() });
           setLocation("/");
+        },
+        onError: () => {
+          toast({ title: "Failed to delete conversation", variant: "destructive" });
         }
       }
     );
@@ -78,12 +88,15 @@ export default function Sidebar() {
 
   const handleRename = (id: number, currentTitle: string) => {
     const newTitle = prompt("Rename conversation", currentTitle);
-    if (newTitle && newTitle !== currentTitle) {
+    if (newTitle && newTitle.trim() && newTitle !== currentTitle) {
       updateChat.mutate(
-        { id, data: { title: newTitle } },
+        { id, data: { title: newTitle.trim() } },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListOpenrouterConversationsQueryKey() });
+          },
+          onError: () => {
+            toast({ title: "Failed to rename conversation", variant: "destructive" });
           }
         }
       );
@@ -103,55 +116,47 @@ export default function Sidebar() {
 
   if (collapsed) {
     return (
-      <div className="w-16 flex flex-col border-r border-border/50 bg-sidebar items-center py-4 transition-all duration-300">
+      <div className="w-12 flex flex-col border-r border-sidebar-border/60 bg-sidebar items-center py-4 transition-all duration-300">
         <button
           onClick={() => setCollapsed(false)}
           className="p-2 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground mb-4"
         >
-          <PanelLeft className="w-5 h-5" />
-        </button>
-        <button
-          onClick={handleNewChat}
-          className="p-2 rounded-md bg-sidebar-primary/10 text-sidebar-primary hover:bg-sidebar-primary/20"
-        >
-          <Plus className="w-5 h-5" />
+          <PanelLeft className="w-4 h-4" />
         </button>
       </div>
     );
   }
 
-  const pinned = conversations?.filter(c => c.pinned) || [];
-  const unpinned = conversations?.filter(c => !c.pinned) || [];
+  const pinned = conversations?.filter(c => c.pinned) ?? [];
+  const unpinned = conversations?.filter(c => !c.pinned) ?? [];
 
   return (
-    <div className="w-64 flex flex-col border-r border-border/50 bg-sidebar transition-all duration-300">
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 font-medium text-sidebar-foreground">
-          <div className="w-6 h-6 bg-sidebar-primary rounded-md flex items-center justify-center text-sidebar-primary-foreground">
-            <span className="text-xs">N</span>
-          </div>
+    <div className="w-[260px] flex flex-col border-r border-sidebar-border/60 bg-sidebar transition-all duration-300">
+      <div className="p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2.5 font-medium text-sidebar-foreground text-[15px] tracking-tight">
+          <div className="w-5 h-5 bg-primary rounded-sm shadow-sm" />
           NeuralChat
         </div>
         <button
           onClick={() => setCollapsed(true)}
           className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
         >
-          <PanelLeftClose className="w-4 h-4" />
+          <PanelLeftClose className="w-[18px] h-[18px]" />
         </button>
       </div>
 
-      <div className="px-3 pb-2">
+      <div className="px-3 pb-3 pt-1">
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center gap-2 bg-sidebar-primary text-sidebar-primary-foreground px-3 py-2 rounded-lg font-medium hover:bg-sidebar-primary/90 transition-colors shadow-sm text-sm"
+          className="w-full h-[34px] flex items-center justify-center gap-2 bg-primary/8 text-primary hover:bg-primary/14 border border-primary/20 rounded-lg font-medium transition-colors text-[13px]"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-[14px] h-[14px]" />
           New Chat
         </button>
       </div>
 
-      <div className="px-3 py-2">
-        <div className="relative">
+      <div className="px-3 pb-2">
+        <div className="relative group">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-sidebar-foreground/40" />
           <input
             id="sidebar-search"
@@ -159,15 +164,15 @@ export default function Sidebar() {
             placeholder="Search... (⌘K)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-sidebar-accent/50 border border-transparent focus:border-sidebar-ring/30 focus:bg-sidebar-accent rounded-md pl-8 pr-3 py-1.5 text-sm outline-none transition-all placeholder:text-sidebar-foreground/40 text-sidebar-foreground"
+            className="w-full bg-sidebar-accent/60 border border-transparent focus:ring-1 focus:ring-primary/30 rounded-lg pl-8 pr-3 py-1.5 text-[13px] outline-none transition-all placeholder:text-sidebar-foreground/40 text-sidebar-foreground"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
+      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4 scrollbar-thin">
         {pinned.length > 0 && (
           <div>
-            <div className="px-2 text-xs font-medium text-sidebar-foreground/50 mb-1 flex items-center gap-1.5">
+            <div className="px-3 text-[11px] font-medium text-sidebar-foreground/50 mb-1 flex items-center gap-1.5 uppercase tracking-wider">
               <Pin className="w-3 h-3" /> Pinned
             </div>
             <div className="space-y-0.5">
@@ -185,7 +190,7 @@ export default function Sidebar() {
         )}
 
         <div>
-          <div className="px-2 text-xs font-medium text-sidebar-foreground/50 mb-1">
+          <div className="px-3 text-[11px] font-medium text-sidebar-foreground/50 mb-1 uppercase tracking-wider">
             {pinned.length > 0 ? "Recent" : "Conversations"}
           </div>
           <div className="space-y-0.5">
@@ -199,7 +204,7 @@ export default function Sidebar() {
               />
             ))}
             {unpinned.length === 0 && !search && (
-              <div className="px-2 py-4 text-center text-sm text-sidebar-foreground/40">
+              <div className="px-3 py-4 text-sm text-sidebar-foreground/40">
                 No conversations yet
               </div>
             )}
@@ -207,77 +212,56 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <div className="p-3 border-t border-sidebar-border/50">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent transition-colors text-left">
-              <div className="w-7 h-7 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary font-medium text-xs">
-                {user?.firstName?.[0] || user?.email?.[0] || "U"}
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <div className="text-sm font-medium truncate text-sidebar-foreground">
-                  {user?.firstName || user?.email?.split('@')[0]}
-                </div>
-              </div>
-              <Settings className="w-4 h-4 text-sidebar-foreground/40" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {stats && (
-              <div className="px-2 py-1.5 mb-1 bg-muted/50 rounded-sm">
-                <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-1 tracking-wider">Your Usage</div>
-                <div className="grid grid-cols-2 gap-1 text-xs">
-                  <div>
-                    <div className="text-muted-foreground">Chats</div>
-                    <div className="font-medium text-foreground">{stats.totalConversations}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Msgs</div>
-                    <div className="font-medium text-foreground">{stats.totalMessages}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              {theme === 'dark' ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
-              <LogOut className="w-4 h-4 mr-2" />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="p-3 border-t border-sidebar-border/60 flex items-center justify-between">
+        <Link href="/settings" className="flex items-center gap-2.5 hover:bg-sidebar-accent rounded-lg p-1.5 transition-colors flex-1 min-w-0 mr-1">
+          <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-primary font-medium text-[13px] shrink-0">
+            {user?.firstName?.[0] ?? user?.email?.[0] ?? "U"}
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <div className="text-[13px] font-medium truncate text-sidebar-foreground">
+              {user?.firstName ?? (user?.email ? user.email.split('@')[0] : "Guest")}
+            </div>
+          </div>
+        </Link>
+        <button 
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors shrink-0"
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </div>
     </div>
   );
 }
 
-function ChatItem({ chat, onPin, onDelete, onRename }: { chat: any, onPin: () => void, onDelete: () => void, onRename: () => void }) {
+function ChatItem({ chat, onPin, onDelete, onRename }: {
+  chat: { id: number; title: string; pinned: boolean };
+  onPin: () => void;
+  onDelete: () => void;
+  onRename: () => void;
+}) {
   const [location] = useLocation();
   const isActive = location === `/c/${chat.id}`;
 
   return (
-    <div className="group relative flex items-center">
+    <div className="group relative flex items-center h-[32px] px-1">
       <Link
         href={`/c/${chat.id}`}
         className={cn(
-          "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors overflow-hidden",
+          "flex-1 flex items-center gap-2 px-2.5 h-full rounded-lg text-[13px] transition-colors overflow-hidden",
           isActive
-            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            ? "bg-sidebar-accent text-foreground font-medium"
+            : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
         )}
       >
-        <MessageSquare className={cn("w-3.5 h-3.5 shrink-0", isActive ? "text-sidebar-primary" : "text-sidebar-foreground/40")} />
         <span className="truncate">{chat.title}</span>
       </Link>
-      
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn(
-            "absolute right-1 p-1 rounded-md bg-sidebar-accent opacity-0 group-hover:opacity-100 transition-opacity",
-            isActive && "opacity-100"
+            "absolute right-2 p-1 rounded-md bg-sidebar opacity-0 group-hover:opacity-100 transition-opacity",
+            isActive ? "bg-sidebar-accent" : "hover:bg-sidebar-accent"
           )}>
             <MoreHorizontal className="w-3.5 h-3.5 text-sidebar-foreground/60" />
           </button>
