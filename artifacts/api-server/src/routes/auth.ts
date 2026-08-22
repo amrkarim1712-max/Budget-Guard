@@ -19,6 +19,7 @@ import {
   SESSION_TTL,
   type SessionData,
 } from '../lib/auth';
+import { logger } from '../lib/logger';
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -295,7 +296,7 @@ router.post(
       const sid = await createSession(sessionData);
       res.json(ExchangeMobileAuthorizationCodeResponse.parse({ token: sid }));
     } catch (err) {
-      req.log.error(getSafeErrorMetadata(err), 'Mobile token exchange error');
+      logger.error(getSafeErrorMetadata(err), 'Mobile token exchange error');
       res.status(500).json({ error: 'Token exchange failed' });
     }
   },
