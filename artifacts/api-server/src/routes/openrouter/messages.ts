@@ -9,10 +9,10 @@ import { webSearchTool, type ChatMessage, type ToolResult } from "../../tools/in
 
 const router: IRouter = Router();
 
-// ── List messages ──────────────────────────────────────────────────────────────
+// ── List messages ───────────────────────────────────────────────────────────
 
 router.get("/openrouter/conversations/:id/messages", async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const msgs = await db
@@ -27,7 +27,7 @@ router.get("/openrouter/conversations/:id/messages", async (req: Request, res: R
 // ── Send message (SSE streaming) ───────────────────────────────────────────────
 
 router.post("/openrouter/conversations/:id/messages", async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const body = SendOpenrouterMessageBody.safeParse(req.body);
@@ -40,7 +40,7 @@ router.post("/openrouter/conversations/:id/messages", async (req: Request, res: 
 
   const baseModel = messageModel ?? conv.model;
 
-  // ── Save user message ────────────────────────────────────────────────────────
+  // ── Save user message ─────────────────────────────────────────────────────────
   const [userMsg] = await db
     .insert(messages)
     .values({
@@ -106,7 +106,7 @@ router.post("/openrouter/conversations/:id/messages", async (req: Request, res: 
     chatMessages.push({ role: "user", content });
   }
 
-  // ── Apply tools ──────────────────────────────────────────────────────────────
+  // ── Apply tools ─────────────────────────────────────────────────────────────
   let toolResult: ToolResult = {
     model: baseModel,
     messages: chatMessages,

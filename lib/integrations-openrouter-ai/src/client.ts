@@ -7,7 +7,7 @@ if (!apiKey) {
   );
 }
 
-export const openrouter = new OpenAI({
+export const openrouter = new OpenAI.default({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey,
   defaultHeaders: {
