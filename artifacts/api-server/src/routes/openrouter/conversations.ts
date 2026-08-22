@@ -57,7 +57,7 @@ router.post("/openrouter/conversations", async (req: Request, res: Response) => 
 
 // Get conversation with messages
 router.get("/openrouter/conversations/:id", async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
@@ -74,7 +74,7 @@ router.get("/openrouter/conversations/:id", async (req: Request, res: Response) 
 
 // Update conversation
 router.patch("/openrouter/conversations/:id", async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const body = UpdateOpenrouterConversationBody.safeParse(req.body);
@@ -94,7 +94,7 @@ router.patch("/openrouter/conversations/:id", async (req: Request, res: Response
 
 // Delete conversation
 router.delete("/openrouter/conversations/:id", async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(req.params.id as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid conversation ID" }); return; }
 
   const [deleted] = await db
